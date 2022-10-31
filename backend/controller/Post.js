@@ -63,4 +63,40 @@ const likedunliked = async (req, res) => {
    }
 };
 
-module.exports = { CreatePost, likedunliked };
+const DeletePost = async (req, res) => {
+   try {
+      const post = await PostModel.findById(req.params.id);
+
+      if (!post) {
+         return res.status(404).json({
+            success: false,
+            message: "bunday post mavjud emas",
+         });
+      }
+
+      if (post.owner.toString() !== req.user._id.toString()) {
+         return res.status(401).json({
+            success: false,
+            message: "siz bu postni o'chira olmaysiz",
+         });
+      }
+      await post.remove();
+
+      const user = await UserModel.findById(req.user._id);
+
+      const index = user.posts.indexOf(req.params.id);
+      user.posts.splice(index, 1);
+      await user.save();
+      return res.status(200).json({
+         success: true,
+         message: "post deleted",
+      });
+   } catch (error) {
+      res.status(500).json({
+         success: false,
+         message: error.message,
+      });
+   }
+};
+
+module.exports = { CreatePost, likedunliked, DeletePost };
