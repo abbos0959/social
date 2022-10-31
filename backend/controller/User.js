@@ -53,7 +53,7 @@ const login = async (req, res) => {
          });
       }
 
-      const token = await jwt.sign({ _id: user._id }, "secret");
+      const token = await jwt.sign({ id: user._id }, "secret");
 
       res.status(200)
          .cookie("token", token, {
