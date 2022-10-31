@@ -39,13 +39,13 @@ const login = async (req, res) => {
    try {
       const { email, password } = req.body;
 
-      const user = await UserModel.findOne({email});
+      const user = await UserModel.findOne({ email });
       if (!user) {
          res.status(404).json({
             message: "bunday user mavjud emas",
          });
       }
-      const checkPassword =await  bcrypt.compare(password, user.password);
+      const checkPassword = await bcrypt.compare(password, user.password);
 
       if (!checkPassword) {
          res.status(400).json({
@@ -55,12 +55,27 @@ const login = async (req, res) => {
 
       const token = await jwt.sign({ _id: user._id }, "secret");
 
-      res.status(200).cookie("token", token).json({
-         success: true,
-         user,
-         token,
-      });
+      res.status(200)
+         .cookie("token", token, {
+            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            httpOnly: true,
+         })
+         .json({
+            success: true,
+            user,
+            token,
+         });
    } catch (error) {}
 };
+const logout = async (req, res) => {
+   res.clearCookie("token", null, {
+      maxAge: new Date(Date.now()),
+      httpOnly: true,
+   });
+   res.status(200).json({
+      message: true,
+      message: "Logout User",
+   });
+};
 
-module.exports = { Register, login };
+module.exports = { Register, login, logout };
