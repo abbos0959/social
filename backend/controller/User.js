@@ -90,16 +90,29 @@ const follower = async (req, res) => {
             message: "bunday user topilmadi",
          });
       }
-      loggedInUser.following.push(userFollow._id);
+      if (loggedInUser.following.includes(userFollow._id)) {
+         const indexFollowing = loggedInUser.following.indexOf(userFollow._id);
+         const indexFollowers = userFollow.followers.indexOf(loggedInUser._id);
+         loggedInUser.following.splice(indexFollowing, 1);
+         userFollow.followers.splice(indexFollowers, 1);
+         await loggedInUser.save();
+         await userFollow.save();
+         return res.status(400).json({
+            success: false,
+            message: "siz obunani bekor qildingiz",
+         });
+      } else {
+         loggedInUser.following.push(userFollow._id);
 
-      userFollow.followers.push(loggedInUser._id);
+         userFollow.followers.push(loggedInUser._id);
 
-      await loggedInUser.save();
-      await userFollow.save();
-      res.status(200).json({
-         success: true,
-         message: "siz obuna bo'ldingiz",
-      });
+         await loggedInUser.save();
+         await userFollow.save();
+         res.status(200).json({
+            success: true,
+            message: "siz obuna bo'ldingiz",
+         });
+      }
    } catch (error) {
       res.status(500).json({
          success: false,
