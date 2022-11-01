@@ -99,4 +99,25 @@ const DeletePost = async (req, res) => {
    }
 };
 
-module.exports = { CreatePost, likedunliked, DeletePost };
+const getPostofFollowing = async (req, res) => {
+   try {
+      const user = await UserModel.findById(req.user._id);
+
+      const posts = await PostModel.find({
+         owner: {
+            $in: user.following,
+         },
+      });
+      res.status(200).json({
+         success: true,
+         posts,
+      });
+   } catch (error) {
+      res.status(500).json({
+         message: error.message,
+         success: false,
+      });
+   }
+};
+
+module.exports = { CreatePost, likedunliked, DeletePost, getPostofFollowing };
