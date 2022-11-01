@@ -78,4 +78,34 @@ const logout = async (req, res) => {
    });
 };
 
-module.exports = { Register, login, logout };
+const follower = async (req, res) => {
+   try {
+      const userFollow = await UserModel.findById(req.params.id);
+
+      const loggedInUser = await UserModel.findById(req.user._id);
+
+      if (!userFollow) {
+         return res.status(404).json({
+            success: false,
+            message: "bunday user topilmadi",
+         });
+      }
+      loggedInUser.following.push(userFollow._id);
+
+      userFollow.followers.push(loggedInUser._id);
+
+      await loggedInUser.save();
+      await userFollow.save();
+      res.status(200).json({
+         success: true,
+         message: "siz obuna bo'ldingiz",
+      });
+   } catch (error) {
+      res.status(500).json({
+         success: false,
+         message: error.message,
+      });
+   }
+};
+
+module.exports = { Register, login, logout, follower };
