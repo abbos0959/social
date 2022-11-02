@@ -58,7 +58,7 @@ const likedunliked = async (req, res) => {
    } catch (error) {
       res.status(500).json({
          success: false,
-         error: error.message,
+         message: error.message,
       });
    }
 };
@@ -120,4 +120,35 @@ const getPostofFollowing = async (req, res) => {
    }
 };
 
-module.exports = { CreatePost, likedunliked, DeletePost, getPostofFollowing };
+const Updatecaption = async (req, res) => {
+   try {
+      const post = await PostModel.findById(req.params.id);
+      if (!post) {
+         return res.status(404).json({
+            message: "bunday post topilmadi",
+            success: false,
+         });
+      }
+
+      if (post.owner.toString() !== req.user._id.toString()) {
+         res.status(401).json({
+            success: false,
+            message: "siz bu postni yangilay olmaysiz",
+         });
+      }
+
+      post.caption = req.body.caption;
+      await post.save();
+      res.status(200).json({
+         success: true,
+         message: "post yangilandi",
+      });
+   } catch (error) {
+      res.status(500).json({
+         message: false,
+         message: error.message,
+      });
+   }
+};
+
+module.exports = { CreatePost, likedunliked, DeletePost, getPostofFollowing, Updatecaption };

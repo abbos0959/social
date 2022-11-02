@@ -1,5 +1,6 @@
 const UserModel = require("../model/User");
 const bcrypt = require("bcrypt");
+const PostModel = require("../model/Post");
 
 const jwt = require("jsonwebtoken");
 const Register = async (req, res) => {
@@ -9,7 +10,7 @@ const Register = async (req, res) => {
       const checkuser = await UserModel.findOne({ email });
 
       if (checkuser) {
-         res.status(400).json({
+         return res.status(400).json({
             message: "bunday user allaqachon mavjud",
          });
       }
@@ -22,10 +23,16 @@ const Register = async (req, res) => {
          password: hashPassword,
          avatar: { public_id: "salom", url: "qalesan" },
       });
+      const token = await jwt.sign({ id: user._id }, "secret");
 
-      res.status(201).json({
-         status: true,
+      const options = {
+         maxAge: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+         httpOnly: true,
+      };
+      res.status(200).cookie("token", token, options).json({
+         success: true,
          user,
+         token,
       });
    } catch (error) {
       res.status(500).json({
@@ -121,4 +128,197 @@ const follower = async (req, res) => {
    }
 };
 
-module.exports = { Register, login, logout, follower };
+const updatePassword = async (req, res) => {
+   try {
+      const user = await UserModel.findById(req.user._id);
+
+      const { oldpassword, newpassword } = req.body;
+
+      if (!oldpassword || !newpassword) {
+         return res.status(404).json({
+            status: false,
+            message: "siz eski va yangi parollarni kiritishingiz shart",
+         });
+      }
+      const comparePassword = await bcrypt.compare(oldpassword, user.password);
+
+      if (!comparePassword) {
+         return res.status(400).json({
+            success: false,
+            message: error.message,
+         });
+      }
+      const hashPassword = await bcrypt.hash(newpassword, 12);
+
+      user.password = hashPassword;
+      await user.save();
+
+      res.status(200).json({
+         success: true,
+         message: "parol yangilandi",
+      });
+   } catch (error) {
+      res.status(500).json({
+         success: false,
+         error: error.message,
+      });
+   }
+};
+
+const updateProfile = async (req, res) => {
+   try {
+      const user = await UserModel.findById(req.user._id);
+
+      const { name, email } = req.body;
+
+      if (!name && !email) {
+         return res.status(400).json({
+            success: false,
+            message: "siz name va email kiritmadingiz",
+         });
+      }
+      if (name) {
+         user.name = name;
+      }
+      if (email) {
+         user.email = email;
+      }
+
+      await user.save();
+      res.status(200).json({
+         success: true,
+         message: "profile yangilandi",
+      });
+   } catch (error) {
+      res.status(500).json({
+         success: false,
+         message: error.message,
+      });
+   }
+};
+
+const deleteProfile = async (req, res) => {
+   try {
+      const user = await UserModel.findById(req.user._id);
+
+      const posts = user.posts;
+      const followers = user.followers;
+      const following = user.following;
+      const userId = user._id;
+      await user.remove();
+      //user profilini o'chirgandan keyin cookieni tozalash
+      res.clearCookie("token", null, {
+         maxAge: new Date(Date.now()),
+         httpOnly: true,
+      });
+
+      //userning barcha postlarini o'chirish
+      for (let i = 0; i < posts.length; i++) {
+         const post = await PostModel.findById(posts[i]);
+         await post.remove();
+      }
+
+      for (let i = 0; i < followers.length; i++) {
+         const follower = await UserModel.findById(followers[i]);
+         // await follower.remove();
+         const index = follower.following.indexOf(userId);
+
+         follower.following.splice(index, 1);
+
+         await follower.save();
+         console.log(follower, "follllllllll");
+      }
+      for (let i = 0; i < following.length; i++) {
+         const followin = await UserModel.findById(following[i]);
+         // await follower.remove();
+         const index = followin.followers.indexOf(userId);
+
+         followin.followers.splice(index, 1);
+
+         await followin.save();
+         console.log(followin, "follllllllll");
+      }
+      res.status(200).json({
+         status: true,
+         message: "profile o'chirildi",
+      });
+   } catch (error) {
+      res.status(500).json({
+         message: error.message,
+         status: false,
+      });
+   }
+};
+
+const myProfile = async (req, res) => {
+   try {
+      const user = await UserModel.findById(req.user._id).populate("posts");
+      res.status(200).json({
+         success: true,
+         user,
+      });
+   } catch (error) {
+      res.status(500).json({
+         success: false,
+         message: error.message,
+      });
+   }
+};
+
+const getUserProfile = async (req, res) => {
+   try {
+      const user = await UserModel.findById(req.params.id).populate("posts");
+
+      if (!user) {
+         return res.status(404).json({
+            success: false,
+            message: "bunday user mavjud emas",
+         });
+      }
+
+      res.status(200).json({
+         success: true,
+         user,
+      });
+   } catch (error) {
+      res.status(500).json({
+         success: false,
+         message: error.message,
+      });
+   }
+};
+
+const getAllusers = async (req, res) => {
+   try {
+      const user = await UserModel.find();
+      if (!user) {
+         return res.status(404).json({
+            success: false,
+            message: "Hozircha userlar mavjud emas",
+         });
+      }
+
+      res.status(200).json({
+         length: user.length,
+         success: true,
+         user,
+      });
+   } catch (error) {
+      res.status(500).json({
+         success: false,
+         message: error.message,
+      });
+   }
+};
+module.exports = {
+   Register,
+   login,
+   logout,
+   follower,
+   updatePassword,
+   updateProfile,
+   deleteProfile,
+   myProfile,
+   getUserProfile,
+   getAllusers,
+};

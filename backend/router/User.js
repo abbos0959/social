@@ -9,4 +9,12 @@ router.route("/login").post(UserController.login);
 router.route("/logout").get(UserController.logout);
 router.route("/follow/:id").get(Isauthentication, UserController.follower);
 
+router.route("/update/password").patch(Isauthentication, UserController.updatePassword);
+router.route("/update/profile").patch(Isauthentication, UserController.updateProfile);
+router.route("/delete/me").delete(Isauthentication, UserController.deleteProfile);
+router.route("/me").get(Isauthentication, UserController.myProfile);
+
+router.route("/user/:id").get(Isauthentication, UserController.getUserProfile);
+router.route("/users").get(Isauthentication, UserController.getAllusers);
+
 module.exports = router;
