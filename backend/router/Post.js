@@ -14,4 +14,8 @@ router
    .delete(Isauthentication.Isauthentication, PostController.DeletePost)
    .patch(Isauthentication.Isauthentication, PostController.Updatecaption);
 
+router
+   .route("/post/comment/:id")
+   .patch(Isauthentication.Isauthentication, PostController.commentPost);
+
 module.exports = router;

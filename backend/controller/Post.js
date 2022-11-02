@@ -151,4 +151,57 @@ const Updatecaption = async (req, res) => {
    }
 };
 
-module.exports = { CreatePost, likedunliked, DeletePost, getPostofFollowing, Updatecaption };
+const commentPost = async (req, res) => {
+   try {
+      const post = await PostModel.findById(req.params.id);
+
+      if (!post) {
+         return res.status(404).json({
+            success: false,
+            message: "bunday post mavjud emas",
+         });
+      }
+
+      let checkcomment = -1;
+
+      post.comments.forEach((item, index) => {
+         if (item.user.toString() === req.user._id.toString()) {
+            checkcomment = index;
+            console.log(index);
+         }
+      });
+
+      if (checkcomment !== -1) {
+         post.comments[checkcomment].comment = req.body.comment;
+         await post.save();
+         return res.status(200).json({
+            success: true,
+            message: "comment yangilandi",
+         });
+      } else {
+         post.comments.push({
+            user: req.user._id,
+            comment: req.body.comment,
+         });
+
+         await post.save();
+         res.status(200).json({
+            success: true,
+            message: "comment qo'shildi",
+         });
+      }
+   } catch (error) {
+      res.status(500).json({
+         success: false,
+         message: error.message,
+      });
+   }
+};
+module.exports = {
+   CreatePost,
+   likedunliked,
+   DeletePost,
+   getPostofFollowing,
+   Updatecaption,
+   commentPost,
+};
