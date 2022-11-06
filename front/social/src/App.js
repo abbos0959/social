@@ -1,8 +1,12 @@
-import logo from "./logo.svg";
 import "./App.css";
-
+import { Header } from "./components/Header/Header";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 function App() {
-   return <div className="App">salom</div>;
+   return (
+      <Router>
+         <Header></Header>
+      </Router>
+   );
 }
 
 export default App;
