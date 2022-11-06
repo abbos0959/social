@@ -197,6 +197,56 @@ const commentPost = async (req, res) => {
       });
    }
 };
+
+const deleteComment = async (req, res) => {
+   try {
+      const post = await PostModel.findById(req.params.id);
+      if (!post) {
+         return res.status(404).json({
+            success: false,
+            message: "bunday post mavjud emas",
+         });
+      }
+
+      if (post.owner.toString() === req.user._id.toString()) {
+         if (req.body.commentId === undefined) {
+            return res.status(404).json({
+               success: false,
+               message: "commentId kiritilmadi",
+            });
+         }
+
+         post.comments.forEach((item, index) => {
+            if (item._id.toString() === req.body.commentId.toString()) {
+               return post.comments.splice(index, 1);
+            }
+         });
+
+         await post.save();
+         return res.status(200).json({
+            success: true,
+            message: "comment o'chirildi",
+         });
+      } else {
+         post.comments.forEach((item, index) => {
+            if (item.user.toString() === req.user._id.toString()) {
+               return post.comments.splice(index, 1);
+            }
+         });
+         await post.save();
+
+         return res.status(200).json({
+            message: true,
+            message: "sizning commentingiz o'chirildi",
+         });
+      }
+   } catch (error) {
+      res.status(500).json({
+         success: false,
+         message: error.message,
+      });
+   }
+};
 module.exports = {
    CreatePost,
    likedunliked,
@@ -204,4 +254,5 @@ module.exports = {
    getPostofFollowing,
    Updatecaption,
    commentPost,
+   deleteComment,
 };

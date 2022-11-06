@@ -16,6 +16,7 @@ router
 
 router
    .route("/post/comment/:id")
-   .patch(Isauthentication.Isauthentication, PostController.commentPost);
+   .patch(Isauthentication.Isauthentication, PostController.commentPost)
+   .delete(Isauthentication.Isauthentication, PostController.deleteComment);
 
 module.exports = router;

@@ -1,8 +1,10 @@
 const UserModel = require("../model/User");
 const bcrypt = require("bcrypt");
 const PostModel = require("../model/Post");
-
+const sendEmail = require("../utils/sendEmail");
 const jwt = require("jsonwebtoken");
+
+const crypto = require("crypto");
 const Register = async (req, res) => {
    try {
       const { name, email, password } = req.body;
@@ -310,6 +312,86 @@ const getAllusers = async (req, res) => {
       });
    }
 };
+
+const forgotpassword = async (req, res) => {
+   try {
+      const user = await UserModel.findOne({ email: req.body.email });
+
+      if (!user) {
+         return res.status(404).json({
+            success: false,
+            message: "bunday user mavjud emas",
+         });
+      }
+
+      const resetPasswordToken = user.getResetPasswordToken();
+
+      await user.save();
+
+      const resetPasswordUrl = `${req.protocol}://${req.get(
+         "host"
+      )}/api/v1/password/reset/${resetPasswordToken}`;
+
+      const message = `sizning  parolingiz  tiklash tokeni ${resetPasswordUrl}`;
+
+      try {
+         await sendEmail({
+            email: user.email,
+            subject: "parolingizni tiklash tokeni",
+            message,
+         });
+         res.status(200).json({
+            message: "emailga token yuborildi",
+         });
+      } catch (error) {
+         (user.resetPasswordToken = undefined), (user.resetPasswordExpire = undefined);
+         await user.save({ validateBeforeSave: false });
+         res.status(500).json({
+            success: false,
+            message: error.message,
+         });
+      }
+   } catch (error) {
+      res.status(500).json({
+         success: false,
+         message: error.message,
+      });
+   }
+};
+
+const resetPassword = async (req, res) => {
+   try {
+      const resetPasswordToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
+
+      const user = await UserModel.findOne({
+         resetPasswordToken,
+         resetPasswordExpire: { $gt: Date.now() },
+      });
+
+      if (!user) {
+         return res.status(404).json({
+            success: false,
+            message: "token Xatolik mavjud",
+         });
+      }
+
+      const hashPassword1 = await bcrypt.hash(req.body.password, 12);
+      user.password = hashPassword1;
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+
+      await user.save();
+      res.status(200).json({
+         success: true,
+         message: "parol yangilandi",
+      });
+   } catch (error) {
+      res.status(500).json({
+         success: false,
+         message: error.message,
+      });
+   }
+};
 module.exports = {
    Register,
    login,
@@ -321,4 +403,6 @@ module.exports = {
    myProfile,
    getUserProfile,
    getAllusers,
+   forgotpassword,
+   resetPassword,
 };

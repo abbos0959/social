@@ -13,6 +13,8 @@ router.route("/update/password").patch(Isauthentication, UserController.updatePa
 router.route("/update/profile").patch(Isauthentication, UserController.updateProfile);
 router.route("/delete/me").delete(Isauthentication, UserController.deleteProfile);
 router.route("/me").get(Isauthentication, UserController.myProfile);
+router.route("/forgot/password").post(Isauthentication, UserController.forgotpassword);
+router.route("/password/reset/:token").patch(UserController.resetPassword);
 
 router.route("/user/:id").get(Isauthentication, UserController.getUserProfile);
 router.route("/users").get(Isauthentication, UserController.getAllusers);
