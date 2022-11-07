@@ -1,6 +1,8 @@
 import { createReducer } from "@reduxjs/toolkit";
 
-const initialState = {};
+const initialState = {
+   isauth: false,
+};
 
 export const userReducer = createReducer(initialState, {
    LoginRequest: (state) => {
@@ -9,10 +11,25 @@ export const userReducer = createReducer(initialState, {
    LoginSuccess: (state, action) => {
       state.loading = false;
       state.user = action.payload;
+      state.isauth = true;
    },
    LoginFailure: (state, action) => {
       state.loading = false;
       state.error = action.payload;
+      state.isauth = false;
+   },
+   RegisterRequest: (state) => {
+      state.loading = true;
+   },
+   RegisterSuccess: (state, action) => {
+      state.loading = false;
+      state.user = action.payload;
+      state.isauth = true;
+   },
+   RegisterFailure: (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+      state.isauth = false;
    },
 
    LoadUserRequest: (state) => {
@@ -21,9 +38,11 @@ export const userReducer = createReducer(initialState, {
    LoadUserSuccess: (state, action) => {
       state.loading = false;
       state.user = action.payload;
+      state.isauth = true;
    },
    LoadUserFailure: (state, action) => {
       state.loading = false;
       state.error = action.payload;
+      state.isauth = false;
    },
 });
