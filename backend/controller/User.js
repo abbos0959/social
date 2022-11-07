@@ -74,7 +74,12 @@ const login = async (req, res) => {
             user,
             token,
          });
-   } catch (error) {}
+   } catch (error) {
+      res.status(500).json({
+         success: false,
+         message: error.message,
+      });
+   }
 };
 const logout = async (req, res) => {
    res.clearCookie("token", null, {
